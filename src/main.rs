@@ -1,8 +1,11 @@
 mod models;
+mod config;
 
 use crate::models::Status;
+use crate::config::Config;
 use actix_web::{App, HttpServer, web, Responder};
 use std::io;
+use dotenv::dotenv;
 
 async fn status() -> impl Responder {
     web::HttpResponse::Ok()
@@ -11,13 +14,17 @@ async fn status() -> impl Responder {
 
 #[actix_rt::main]
 async fn main() -> io::Result<()> {
-    println!("Starting server at 127.0.0.1:5000");
+    dotenv().ok();
+
+    let config = Config::from_env().unwrap();
+
+    println!("Starting server at http://{}:{}", config.server.host, config.server.port);
 
     HttpServer::new(|| {
         App::new()
             .route("/", web::get().to(status))  
     })
-        .bind("127.0.0.1:5000")?
+        .bind(format!("{}:{}", config.server.host, config.server.port))?
         .run()
         .await
 }
